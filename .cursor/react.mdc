@@ -1,0 +1,227 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 🧠 React 19 + Next.js 15.3 + TypeScript Best Practices
+
+This guide outlines modern best practices for building scalable, maintainable, and high-performance applications using **React 19**, **Next.js 15.3**, and **TypeScript**.
+
+---
+
+## 1. 📁 Project Structure
+
+### Recommended Directory Layout
+
+Organize your project to clearly separate concerns and leverage Next.js features:
+
+```txt
+src/
+├── app/                 # Next.js App Router pages and layouts
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── ...
+├── components/          # Reusable UI components
+│   ├── Button/
+│   │   ├── Button.tsx
+│   │   ├── Button.module.css
+│   │   └── Button.test.tsx
+│   └── ...
+├── hooks/               # Custom React hooks
+│   └── useAuth.ts
+├── contexts/            # React context providers
+│   └── AuthContext.tsx
+├── services/            # API calls and business logic
+│   └── authService.ts
+├── utils/               # Utility functions
+│   └── formatDate.ts
+└── types/               # TypeScript type definitions
+    └── index.d.ts
+```
+
+### Naming Conventions
+
+* **Components**: PascalCase (e.g., `Button.tsx`)
+* **Hooks**: camelCase prefixed with `use` (e.g., `useFetch.ts`)
+* **Contexts**: PascalCase suffixed with `Context` (e.g., `AuthContext.tsx`)
+* **Services/Utils**: camelCase (e.g., `authService.ts`, `formatDate.ts`)
+* **CSS Modules**: `.module.css` or `.module.scss`
+
+---
+
+## 2. ⚛️ React 19 Features
+
+### Server Components
+
+Use **React Server Components** to reduce client-side bundle size and improve TTFB.
+
+```tsx
+// app/page.tsx
+import UserList from '../components/UserList';
+
+export default function Page() {
+  return <UserList />;
+}
+```
+
+In `UserList.tsx`:
+
+```tsx
+// components/UserList.tsx
+export default async function UserList() {
+  const res = await fetch('https://api.example.com/users');
+  const users = await res.json();
+  return (
+    <ul>
+      {users.map((user: any) => (
+        <li key={user.id}>{user.name}</li>
+      ))}
+    </ul>
+  );
+}
+```
+
+### Actions and Forms
+
+Leverage **React Actions** (`useActionState`, `useFormStatus`) for better form handling and async state updates:
+
+```tsx
+'use client';
+import { useActionState } from 'react';
+
+function UpdateNameForm() {
+  const [state, formAction] = useActionState(
+    async (_prevState, formData) => {
+      const name = formData.get('name');
+      await fetch('/api/name', {
+        method: 'POST',
+        body: JSON.stringify({ name })
+      });
+      return { success: true };
+    },
+    { success: false }
+  );
+
+  return (
+    <form action={formAction}>
+      <input name="name" />
+      <button type="submit">Update</button>
+    </form>
+  );
+}
+```
+
+---
+
+## 3. 🔄 Component Design Patterns
+
+* **Use composition over inheritance**
+* **Separate concerns**: keep logic (hooks, contexts) separate from UI (components)
+* **Follow atomic design** if working on a design system (Atoms > Molecules > Organisms)
+* Prefer function components with hooks
+* Avoid `React.FC` and instead use modern function syntax with explicit props typing (e.g., `function Button({ ... }: Props) {}`)
+
+---
+
+## 4. ⚖️ TypeScript Configuration
+
+* Use `strict: true` in `tsconfig.json`
+* Type props explicitly
+* Prefer `type` over `interface` for component props and shared data structures
+* Define shared types in `/types/`
+
+Example:
+
+```ts
+// types/user.ts
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+};
+```
+
+```tsx
+// components/UserCard.tsx
+import { User } from '@/types/user';
+
+export function UserCard({ user }: { user: User }) {
+  return <div>{user.name}</div>;
+}
+```
+
+---
+
+## 5. ⚡️ Performance Optimizations
+
+* Use **React 19 automatic memoization** – avoid overusing `useMemo`, `useCallback`
+* Load heavy components with `React.lazy`
+* Split bundles by route (Next.js does this automatically)
+* Lazy load offscreen components with `Suspense` and `IntersectionObserver`
+
+---
+
+## 6. 🔐 Security Best Practices
+
+* Sanitize inputs and use schema validation (e.g., Zod)
+* Use HTTPS, CORS headers, and environment variable protection
+* Never expose secrets in client code
+
+---
+
+## 7. ✅ Testing Strategy
+
+* Use **Jest** for unit tests (or Vitest if preferred)
+* Use **React Testing Library** for component rendering
+* Use **Playwright or Cypress** for end-to-end testing
+* Co-locate test files next to the components
+
+```tsx
+// Button.test.tsx
+import { render, screen } from '@testing-library/react';
+import { Button } from './Button';
+
+test('renders button', () => {
+  render(<Button label="Click Me" />);
+  expect(screen.getByText('Click Me')).toBeInTheDocument();
+});
+```
+
+---
+
+## 8. ⚙️ Tooling & CI/CD
+
+* Use **ESLint** with `eslint-plugin-react`, `eslint-plugin-jsx-a11y`, and `@typescript-eslint`
+* Use **Prettier** with a strict config
+* Automate with **Husky** and `lint-staged`
+* Deploy via **Vercel** or **GitHub Actions** (CI/CD)
+* Analyze bundles with `@next/bundle-analyzer`
+* Use **pnpm** as the default package manager
+
+---
+
+## 9. 🛠️ Environment & Dev Setup
+
+* Use `.env.local`, `.env.production` for configuration
+* Prefer absolute imports via `baseUrl` in `tsconfig.json`
+* No `postinstall` or editor-specific config required at this time
+
+---
+
+## 10. ⚠️ Common Pitfalls (React 19)
+
+* Forgetting to use `"use client"` on components that rely on interactivity
+* Using `useEffect` where a Server Component would suffice
+* Misplacing async data fetching inside Client Components
+
+---
+
+## Summary
+
+Stay up to date with:
+
+* [React 19 Changelog](https://react.dev/blog/2024/04/25/react-19)
+* [Next.js 15 Docs](https://nextjs.org/docs)
+* [TypeScript Best Practices](https://www.typescriptlang.org/docs/handbook/)
+
+Make your rules clear and your code clean. React 19 + Next.js 15 + TypeScript is a powerful combo — leverage it with discipline.

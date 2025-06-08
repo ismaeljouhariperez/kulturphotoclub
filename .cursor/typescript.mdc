@@ -1,0 +1,169 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# TypeScript Best Practices and Coding Standards
+
+This document outlines best practices and coding standards for developing TypeScript applications. Following these guidelines will help ensure code quality, maintainability, and scalability in modern React/Next.js environments using pnpm and strict type safety.
+
+## 1. Code Organization and Structure
+
+* **Directory Structure:**
+
+  * Prefer **feature-based** organization for scalable apps.
+  * Organize files into `components`, `services`, `types`, and `actions` within each feature.
+
+  ```bash
+  src/
+  ├── users/
+  │   ├── components/
+  │   ├── services/
+  │   ├── actions/
+  │   └── types.ts
+  ├── shared/
+  │   ├── components/
+  │   ├── utils/
+  │   └── types/
+  └── lib/
+  ```
+
+* **File Naming Conventions:**
+
+  * Components: `Button.tsx`
+  * Hooks: `useFetch.ts`
+  * Services: `cmsAdapter.service.ts`
+  * Types: `user.types.ts` or `types.ts`
+  * Prefer lowercase file names for non-components.
+
+* **Modules:**
+
+  * Use ESModules (`import`/`export`)
+  * Prefer **named exports** over default exports
+  * Avoid circular dependencies
+
+* **Component Architecture:**
+
+  * Use **function components**, not `React.FC`
+  * Use explicit `type Props = {}` and `function Component({}: Props)`
+  * Compose rather than inherit
+
+* **Code Splitting:**
+
+  * Use `dynamic import()` for lazy loading components
+  * Group non-critical logic into smaller, lazy-loaded modules
+
+## 2. Patterns and Anti-patterns
+
+* **Design Patterns:**
+
+  * Factory, Strategy, Adapter, Observer
+  * Dependency Injection when appropriate
+
+* **Recommended Approaches:**
+
+  * Data Fetching: `fetch`/`axios` inside typed custom hooks
+  * Forms: `react-hook-form`
+  * State: `Zustand`, `Jotai`, `React Context`
+  * Validation: `zod` for schema validation and inference
+
+* **Anti-patterns:**
+
+  * Avoid `any`; use `unknown`, unions, generics
+  * Avoid long functions or overly deep nesting
+  * Replace magic values with constants
+  * Never catch errors without handling/logging them
+  * Write self-documenting code, comment only for non-obvious logic
+
+* **Error Handling:**
+
+  * Use `try/catch` with logging and fallback strategies
+  * Discriminated unions for error states
+  * Global error boundary for UI errors
+
+## 3. Performance Considerations
+
+* **Memoization:**
+
+  * Use `useMemo`, `useCallback` only when needed (React 19 handles most cases automatically)
+
+* **Optimization:**
+
+  * Avoid unnecessary re-renders with structural memoization
+  * Use `react-window` or `react-virtualized` for long lists
+
+* **Lazy Loading:**
+
+  * Load components or hooks only when needed
+  * Use `dynamic(() => import(...))` in Next.js
+
+* **Assets:**
+
+  * Use `next/image` for optimization
+  * Prefer `tailwindcss` over custom styles when possible
+
+## 4. Security
+
+* Sanitize user input and escape output
+* Avoid client-exposed secrets; use `.env.*`
+* Use HTTPS and secure headers
+* Validate API input with zod or similar tools
+
+## 5. Testing
+
+* **Unit Tests:**
+
+  * Use `vitest` or `jest` with `@testing-library/react`
+
+* **E2E:**
+
+  * Use `playwright` or `cypress`
+
+* **Test Naming & Structure:**
+
+  * Use `.test.ts(x)` next to each file
+  * Prefer `describe()`/`it()` blocks
+
+* **Mocking:**
+
+  * Use `vi.mock()` / `jest.mock()` sparingly
+
+## 6. Tooling
+
+* **Package Manager:** `pnpm`
+* **Formatter:** Prettier (strict)
+* **Linter:** ESLint with `@typescript-eslint`, `plugin:react/recommended`
+* **CI/CD:**
+
+  * Lint and test in CI before merge
+  * Use GitHub Actions or Turborepo pipelines
+
+## 7. tsconfig.json Guidelines
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["src"]
+}
+```
+
+## 8. Summary
+
+This document reflects the best practices as of 2024 for large-scale TypeScript applications using React 19, Next.js 15+, and a modular monorepo structure. Prefer `type` over `interface`, avoid `any`, and aim for clarity, safety, and composability.
+
+Keep your `types`, `hooks`, `services`, and `components` predictable and documented, and your project will scale with ease.

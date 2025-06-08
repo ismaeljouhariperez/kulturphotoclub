@@ -1,0 +1,183 @@
+---
+description: This rule provides comprehensive guidelines for ESLint, covering code organization, common patterns, performance, security, testing, and tooling, ensuring high-quality, maintainable JavaScript/TypeScript code.
+globs: **/*.{js,jsx,ts,tsx,vue}
+alwaysApply: false
+---
+# ESLint & Code Quality Best Practices
+
+This document outlines best practices for setting up and maintaining ESLint and code quality in projects using Next.js 15.3+, React 18+, TypeScript, Tailwind CSS, GSAP, Framer Motion, and a pnpm-based monorepo.
+
+---
+
+## Library Information
+
+* **Name:** ESLint / Code Quality
+* **Tags:** lint, formatting, typescript, react, tailwind, gsap, framer, pnpm
+
+---
+
+## 1. Code Organization and Structure
+
+### 1.1 Directory Structure Best Practices
+
+* **Monorepo root:** Place the ESLint config (`.eslintrc.js` or `.eslintrc.json`) and `.prettierrc` at the project root for consistency.
+* **Workspace linting:** Use `pnpm` workspaces to share configs between `/next`, `/sanity`, `/packages`, etc.
+* **Ignore files:** `.eslintignore` at root; ignore build artifacts, `node_modules`, and generated files.
+* **Subproject overrides:** Use ESLint `overrides` for specific needs in `/sanity` or legacy code.
+
+Example:
+
+```
+cms-boilerplate/
+├── next/
+├── sanity/
+├── packages/
+├── .eslintrc.js
+├── .eslintignore
+├── .prettierrc
+├── package.json
+└── pnpm-workspace.yaml
+```
+
+### 1.2 File Naming Conventions
+
+* **Config files:** Use `.eslintrc.js`, `.prettierrc`, `.eslintignore`.
+* **Component files:** `PascalCase` for React components (`MyComponent.tsx`), `camelCase` for helpers (`formatDate.ts`).
+* **Test files:** Append `.test.tsx` or `.spec.tsx` for tests.
+* **No default exports**: Prefer named exports for components and utilities.
+* **TypeScript:** Always use `.ts`/`.tsx` for new code.
+
+### 1.3 Module Organization Best Practices
+
+* **Feature-based:** Organize by feature/domain (see boilerplate structure).
+* **Reusable utilities:** Place shared logic in `/packages`.
+* **Avoid circular deps:** Use ESLint’s import plugin to detect.
+
+---
+
+## 2. ESLint Setup & Plugins
+
+### 2.1 Essential Plugins
+
+* `@typescript-eslint/eslint-plugin`
+* `eslint-plugin-react`
+* `eslint-plugin-react-hooks`
+* `eslint-plugin-jsx-a11y`
+* `eslint-plugin-tailwindcss`
+* `eslint-plugin-unused-imports`
+* `eslint-plugin-import`
+
+### 2.2 Recommended Base Config
+
+```js
+// .eslintrc.js
+module.exports = {
+  root: true,
+  parser: '@typescript-eslint/parser',
+  plugins: [
+    '@typescript-eslint',
+    'react',
+    'react-hooks',
+    'jsx-a11y',
+    'tailwindcss',
+    'unused-imports',
+    'import',
+  ],
+  extends: [
+    'next/core-web-vitals',
+    'plugin:@typescript-eslint/recommended',
+    'plugin:react/recommended',
+    'plugin:jsx-a11y/recommended',
+    'plugin:prettier/recommended',
+  ],
+  rules: {
+    'react/react-in-jsx-scope': 'off',
+    'no-console': 'warn',
+    '@typescript-eslint/no-unused-vars': 'off',
+    'unused-imports/no-unused-imports': 'error',
+    'import/order': ['warn', { 'newlines-between': 'always' }],
+    'tailwindcss/classnames-order': 'warn',
+  },
+  settings: {
+    react: { version: 'detect' },
+  },
+}
+```
+
+### 2.3 VS Code Integration
+
+Install the ESLint extension and enable auto-fix on save:
+
+```json
+"editor.codeActionsOnSave": {
+  "source.fixAll.eslint": true
+},
+"eslint.validate": ["javascript", "typescript", "typescriptreact"]
+```
+
+---
+
+## 3. TailwindCSS + ESLint Best Practices
+
+* Enforce class order with `eslint-plugin-tailwindcss`
+* Use `@apply` with care in component-specific `.module.css` or within `@layer components`
+* Avoid arbitrary values unless necessary
+* Keep spacing/padding logic consistent by extracting reusable utility patterns
+
+---
+
+## 4. React + Hooks + A11Y
+
+* Enforce exhaustive deps in hooks: `react-hooks/exhaustive-deps`
+* Respect accessible roles and label associations with `jsx-a11y`
+* Never use `any`; prefer `unknown` or refined types
+
+---
+
+## 5. TypeScript & Linting Rules
+
+* Always prefer `interface` for public APIs, `type` for internal unions
+* Avoid disabling rules with `// eslint-disable-next-line` unless absolutely necessary
+* Use `@typescript-eslint/consistent-type-imports`
+
+---
+
+## 6. Performance & Cleanup
+
+* Use `eslint-plugin-unused-imports` to remove dead code
+* Prefer named imports
+* Auto-fix and lint staged files with `lint-staged` and `husky`
+
+---
+
+## 7. Scripts
+
+```json
+"scripts": {
+  "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+  "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+}
+```
+
+---
+
+## 8. Formatter Setup
+
+Prettier config for consistency:
+
+```json
+{
+  "semi": false,
+  "singleQuote": true,
+  "printWidth": 100,
+  "trailingComma": "es5",
+  "bracketSpacing": true,
+  "arrowParens": "always"
+}
+```
+
+---
+
+## 9. Summary
+
+This setup ensures a clean, performant, and scalable dev environment across all workspace packages. Adapt rules to your project context but aim for automation, consistency, and maintainability.

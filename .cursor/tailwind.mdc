@@ -1,0 +1,155 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Tailwind CSS Best Practices and Guidelines
+
+This document outlines best practices for using Tailwind CSS in a modern monorepo architecture with **Next.js 15.3**, **React 19**, **TypeScript**, and **PNPM**. It reflects your project structure and preferences, helping Cursor generate clean, scalable, and maintainable Tailwind code.
+
+## 1. General Setup
+
+* **Tailwind Version**: Always use the latest version (v4+).
+* **Build Tool**: Integrated with Next.js via PostCSS.
+* **Package Manager**: Tailwind is installed via `pnpm` in `next/` and shared packages.
+* **Tailwind Config Location**: Root of `next/` or `packages/ui` for shared styles.
+
+```bash
+pnpm add -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+```
+
+## 2. Configuration (`tailwind.config.ts`)
+
+```ts
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  content: [
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/ui/**/*.{ts,tsx}',
+    '../../cms/sanity/**/*.{ts,tsx}'
+  ],
+  theme: {
+    extend: {
+      colors: {
+        brand: {
+          DEFAULT: '#34657F',
+          muted: '#7A99AC',
+          accent: '#545434',
+          bg: '#D6D2C2',
+        },
+      },
+      fontFamily: {
+        sans: ['Aspekta', 'sans-serif'],
+        heading: ['LT Museum', 'serif'],
+      },
+    },
+  },
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('tailwindcss-animate'),
+  ],
+};
+
+export default config;
+```
+
+## 3. File Organization
+
+* **Input CSS file**: `next/src/styles/tailwind.css`
+* **Layers**: Use Tailwind's layer directives for clean separation:
+
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+* **Folder conventions**:
+
+  * `packages/ui/src/components/` for reusable UI
+  * `packages/ui/src/styles/` for shared base/component styles
+
+## 4. Utility Best Practices
+
+### ✅ Use Tailwind classes directly in JSX
+
+* Keep JSX declarative and consistent.
+* Use `clsx()` for conditional classes.
+
+### ✅ Use `@apply` for shared styling
+
+```css
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 rounded text-white bg-brand hover:bg-brand-muted;
+  }
+}
+```
+
+### ✅ Use `theme()` helper in CSS/JS
+
+```ts
+const color = theme('colors.brand.DEFAULT');
+```
+
+### ✅ Use responsive and interaction variants
+
+```tsx
+<div className="text-sm sm:text-base hover:bg-brand-muted focus:outline-none" />
+```
+
+### ✅ Prefer `theme.extend` over arbitrary values
+
+Avoid overusing values like `w-[23px]`. If used often, add them to the config.
+
+### ✅ Prefer mobile-first with responsive modifiers
+
+Tailwind is mobile-first by default. Structure styles accordingly.
+
+### ✅ Use semantic tokens (colors, spacing, typography)
+
+Avoid hardcoded values. Use tokens from your config.
+
+## 5. Editor & Dev Environment
+
+* **Recommended Extension**: Tailwind CSS IntelliSense (VSCode)
+* **Enable autocomplete and class sorting**
+* **Use Prettier and ESLint with `eslint-plugin-tailwindcss`** for consistent class order.
+
+```json
+"plugins": ["tailwindcss"],
+"rules": {
+  "tailwindcss/classnames-order": "warn"
+}
+```
+
+## 6. Performance Considerations
+
+* **JIT Enabled by default**: Purge happens automatically in production.
+* **Only scan what's needed**: Define precise paths in `content:`
+* **Use `@apply` to reduce duplication** in heavily reused styles.
+* **Avoid excessive utility chaining**: Consider readability.
+
+## 7. Shared Components / Design System
+
+* Store shared tokens and patterns in `packages/ui`
+* Create semantic utilities for `.card`, `.heading`, `.btn`, etc.
+* Compose with Tailwind classes + `@apply`
+
+## 8. Plugins & Extensions
+
+* `@tailwindcss/typography`: Enhance Markdown and content styles.
+* `tailwindcss-animate`: For transition/animation utilities.
+* Optional integration: Headless UI (if used), Shadcn UI (already integrated)
+
+## 9. Accessibility & Readability
+
+* Prefer variants like `aria-`, `data-`, `group-`, and `peer-` for UI state control.
+* Add tooltips and labels via semantic HTML + Tailwind utilities.
+* Keep classes ordered logically (`display`, `position`, `layout`, `space`, `colors`, etc.)
+
+---
+
+This Tailwind configuration is designed for long-term scalability, performance, and composability in your monorepo-based Next.js CMS stack.

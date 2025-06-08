@@ -1,0 +1,235 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Next.js Best Practices
+
+This document outlines best practices for developing Next.js applications, with the latest updates from **Next.js 15.3**. It covers code organization, performance optimization, security, testing strategies, and common pitfalls to avoid. These guidelines will help you build robust, scalable, and maintainable applications.
+
+## 1. Code Organization and Structure
+
+### Directory Structure
+
+* **`app/`** (Recommended – Next.js 13+):
+
+  * `page.tsx`: Route UI entry point
+  * `layout.tsx`: Shared layout for nested routes
+  * `loading.tsx`: UI displayed while the route is loading
+  * `error.tsx`: Error fallback for a segment
+  * `head.tsx`: Metadata and `<head>` config
+  * `route.ts`: Route handler (e.g., API or POST)
+  * `[slug]`: Dynamic segment
+  * `@group/`: Route Groups (Next.js 13+)
+
+* **`pages/`** (Legacy – Before Next.js 13):
+
+  * `api/`: Serverless functions
+  * `_app.tsx`, `_document.tsx`: Global wrappers
+
+* **Other Folders:**
+
+  * `components/`: Reusable UI components
+  * `lib/`: Utilities, helpers, 3rd-party integrations
+  * `hooks/`: Custom React hooks
+  * `styles/`: Global CSS and modules
+  * `public/`: Static assets
+  * `types/`: TypeScript types
+  * `utils/`: Miscellaneous utilities
+
+**Recommendation:** Always prefer the `app/` router with React Server Components.
+
+### File Naming Conventions
+
+* Components: `ComponentName.tsx`
+* Pages: `page.tsx`, `layout.tsx`, `error.tsx`, etc.
+* API Routes: `route.ts`
+* Hooks: `useSomething.ts`
+* Styles: `Component.module.css`
+* Types: `types.ts` or `interfaceName.types.ts`
+
+### Module Organization
+
+* Co-locate styles, tests, and components
+* Prefer feature-based folders (e.g., `features/auth/`)
+* Avoid deeply nested folders
+
+### Component Architecture
+
+* Prefer **Server Components** by default
+* Use **Client Components** only when needed (`"use client"`)
+* Separate presentation (dumb) vs logic (smart) components
+* Use composition over inheritance
+* Adopt **atomic design** when building a design system
+
+### Code Splitting
+
+* Use `next/dynamic` for lazy-loading components
+* Split large features with `import()`
+* Benefit from automatic route-based code splitting
+
+## 2. Common Patterns and Anti-Patterns
+
+### Design Patterns
+
+* Hooks for logic reuse
+* Context API for lightweight global state
+* Compound components (e.g., `<Tabs><Tab /></Tabs>`) for encapsulated state
+* Higher-Order Components: use sparingly, favor hooks
+
+### Recommended Approaches
+
+* **Data Fetching:**
+
+  * Use `server-only` and `cache()` for stable fetches
+  * Prefer Server Actions or route handlers for mutations
+  * SWR/React Query for Client Components
+
+* **Styling:**
+
+  * Tailwind CSS (preferred)
+  * CSS Modules or PostCSS
+
+* **Forms:**
+
+  * Use `react-hook-form` + `zod`
+  * Leverage Next.js Server Actions for progressive enhancement
+
+* **State Management:**
+
+  * Zustand, Jotai, or lightweight `useContext`
+  * Avoid Redux unless essential
+
+* **API Routes:**
+
+  * Prefer `app/api/route.ts` with `POST`, `GET`, `PATCH`, etc.
+
+### Anti-patterns
+
+* Avoid `use client` unnecessarily (adds to bundle size)
+* Don’t mix server-only logic inside Client Components
+* Avoid excessive dynamic imports without fallback
+* Don’t mutate state directly
+* Avoid large monolithic pages/components
+
+## 3. Performance Optimization
+
+### Next.js 15.3 Highlights
+
+* **Partial Prerendering (Preview):**
+
+  * Combines SSR + SSG per component boundary
+  * Greatly improves time-to-interactive
+
+* **React 19 Compatibility:**
+
+  * Full support for `use`, `useFormStatus`, `useActionState`, etc.
+
+* **Improved Observability:**
+
+  * Enhanced logs and error surfaces
+  * New metadata hooks in dev
+
+### Optimization Techniques
+
+* Use `next/image` for automatic responsive/lazy images
+* Optimize fonts with `next/font`
+* Use `Link` prefetching for known navigation paths
+* Use `cache()` and `revalidateTag()` in route handlers
+* Use granular ISR with `revalidatePath()`
+* Leverage built-in gzip/Brotli compression (Vercel, etc.)
+
+### Rendering Optimization
+
+* Use Server Components for default rendering
+* Use loading UI (`loading.tsx`) for skeletons
+* Lazy-load rarely accessed Client Components
+* Split dashboard-style UIs into segments
+
+### Bundle Size Optimization
+
+* Analyze with `next build --profile` or `@next/bundle-analyzer`
+* Replace large libraries with lightweight alternatives
+* Use tree-shakable packages (ESM)
+
+## 4. Security Best Practices
+
+### Input Handling
+
+* Always sanitize user-generated content
+* Validate data on server with Zod or Yup
+* Use schema-driven validation (shared client/server if needed)
+
+### API Security
+
+* Place secrets in `.env.*` and access server-side only
+* Use middlewares for RBAC and auth guards
+* Avoid passing tokens in URLs or exposing secrets in client
+* Use HTTPS and configure CORS properly
+
+### Data Protection
+
+* Store passwords securely (bcrypt, argon2)
+* Use HTTPS with HSTS
+* Enable secure headers (e.g., `helmet`, Vercel config)
+
+## 5. Testing Strategies
+
+* **Unit Testing:**
+
+  * Use Vitest or Jest + React Testing Library
+  * Co-locate tests as `*.test.tsx`
+
+* **Integration Testing:**
+
+  * Use `@testing-library/react` + `msw` for mocking fetches
+  * Validate component/route interaction
+
+* **E2E Testing:**
+
+  * Use Playwright (recommended), or Cypress
+  * Cover critical flows only (auth, checkout, etc.)
+
+### Mocking
+
+* Prefer MSW for API mocking
+* Use `vi.mock()` or `jest.mock()` when needed
+
+## 6. Pitfalls & Edge Cases
+
+* Forgetting to wrap client components with `"use client"`
+* Relying on useEffect for data fetching inside Server Components
+* Fetching data in nested Client Components without fallback
+* Rendering client-only logic before hydration is complete
+
+## 7. Tooling and Environment
+
+### Recommended Tools
+
+* **Editor:** VS Code + Prettier + ESLint plugins
+* **Testing:** Playwright, Vitest
+* **CI/CD:** GitHub Actions, Vercel integrations
+* **Monitoring:** Sentry, LogRocket, Vercel Analytics
+
+### Environment Setup
+
+* `.env.local`, `.env.production`, `.env.test`
+* Use secrets management for deployment (Vercel, Doppler)
+
+### Build Configuration
+
+* Enable strict mode in `next.config.js`
+* Use `experimental` flags like `serverActions`, `typedRoutes`, `partialPrerendering`
+* Define aliases in `tsconfig.json` with `baseUrl` + `paths`
+
+### Deployment
+
+* Deploy on Vercel (first-class support)
+* Use Preview Deployments per PR
+* Cache assets with Vercel/CDN config
+
+---
+
+**Updated for Next.js 15.3 (May 2024)**
+
+This document is meant to evolve with the Next.js ecosystem. Revisit it with every major version to stay aligned with the framework’s best practices and capabilities.

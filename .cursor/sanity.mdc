@@ -1,0 +1,195 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Sanity CMS Best Practices (v3+) with Next.js 15.3, React 19, and TypeScript
+
+This document outlines best practices for integrating and maintaining Sanity CMS (v3+) in a modern monorepo architecture with Next.js 15.3, React 19, and TypeScript.
+
+---
+
+## 1. Sanity Studio Setup
+
+### Location
+
+* Place your Studio in a separate folder: `cms/sanity/`
+* Use **npm** (not pnpm) inside `cms/sanity` to avoid peer dependency conflicts
+
+```bash
+cd cms/sanity
+npm install
+npm run dev
+```
+
+### Route Integration
+
+* Prefer **studio in-app routing** (`/studio`) via `next.config.js` or `@sanity/next` helpers (optional)
+* Enable secure access to `/studio` in production via Next.js middleware or edge auth
+
+### Studio Features
+
+* Use [Structure Builder](https://www.sanity.io/docs/structure-builder) to customize editorial views
+* Co-locate schema files with content types if preferred:
+
+  ```ts
+  schemas/
+  ├── page.ts
+  ├── menu.ts
+  └── siteSettings.ts
+  ```
+
+### Studio Type Safety
+
+* Use `@sanity/types` and optionally generate types from schema JSON using [`sanity typegen`](https://github.com/saiichihashimoto/sanity-codegen)
+* Prefix shared types with `Sanity` to avoid ambiguity (e.g., `SanityPage`, `SanityAsset`)
+
+---
+
+## 2. Content Modeling Guidelines
+
+### Use i18n-aware design
+
+* Prefer a `locale` field or structured multilingual fields (e.g. `{ fr: string; en: string }`)
+* Sanity supports field-level i18n with [@sanity/document-internationalization](https://www.sanity.io/plugins/document-internationalization)
+
+### Reusable content blocks
+
+* Create portable content modules (`blockContent.ts`) and define types
+* Encourage editor UX consistency by creating shared components (`HeroSection`, `CallToAction`, etc.)
+
+### Naming conventions
+
+* Use lowercase, kebab-case IDs for types (`page`, `site-settings`, `menu`)
+* Use singular type names: `page`, not `pages`
+* Use `slug` + `locale` as unique identifiers
+
+---
+
+## 3. CMS Adapter Architecture
+
+### Location
+
+* Sanity adapter lives in `packages/config/src/cms/adapters/sanity.ts`
+
+### Adapter Interface
+
+```ts
+interface CMSAdapter {
+  getPageBySlug(slug: string, locale: string): Promise<PageContent | null>;
+  getSiteSettings(locale: string): Promise<SiteSettings>;
+  getMenuByIdentifier(id: string, locale: string): Promise<Menu | null>;
+  getAssetById(id: string): Promise<ImageAsset | null>;
+  setPreviewMode(enabled: boolean): void;
+}
+```
+
+### Client Creation
+
+Use `@sanity/client`:
+
+```ts
+createClient({
+  projectId: SANITY_PROJECT_ID,
+  dataset: SANITY_DATASET,
+  apiVersion: '2023-05-22',
+  token: SANITY_API_KEY,
+  useCdn: !previewMode,
+})
+```
+
+### Preview Support
+
+* Integrate with `draftMode()` from Next.js
+* Define `/api/preview` and `/api/exit-preview` handlers with secret verification
+* Token for preview mode should have `read` access to drafts
+
+---
+
+## 4. Rendering Content
+
+### Portable Text
+
+Use `@portabletext/react`:
+
+```tsx
+<PortableText value={page.content} components={portableComponents} />
+```
+
+Define `portableComponents` for custom rendering (`image`, `cta`, etc.)
+
+### Images
+
+* Use `next/image` + `@sanity/image-url`:
+
+```ts
+const builder = imageUrlBuilder(client);
+const imageUrl = builder.image(source).width(800).url();
+```
+
+Add `cdn.sanity.io` to `next.config.js` → `images.domains`
+
+---
+
+## 5. Environment & Config
+
+### Required `.env` keys:
+
+```env
+CMS_TYPE=sanity
+SANITY_PROJECT_ID=abc123
+SANITY_DATASET=production
+SANITY_API_KEY=xyz
+SANITY_PREVIEW_TOKEN=xyz
+PREVIEW_SECRET=some-secret
+NEXT_PUBLIC_LOCALES=fr,en
+NEXT_PUBLIC_DEFAULT_LOCALE=fr
+```
+
+### Secrets
+
+* Store tokens securely in `.env`
+* Do not expose write tokens in client-side code
+
+---
+
+## 6. Developer Experience Tips
+
+* **Disable drafts in production build**: ensure `previewMode` is false in production
+* **Type data early**: map to shared types as soon as data is fetched, not in components
+* **Avoid deep nesting** in schema objects to improve query readability
+* **Use GROQ aliases** (`as`) to flatten structures when needed
+* **Prefer `zod` or custom validators** if validating Sanity data before display
+
+---
+
+## 7. Performance Considerations
+
+* Use `useCdn: true` in production for read-only queries
+* Use `select` in GROQ to limit payload size
+* Avoid querying unused fields
+* Cache queries (ISR, SWR, or RSC caching strategies)
+
+---
+
+## 8. Deployment Checklist
+
+* ✅ Tokens created with `read` access for API use
+* ✅ Sanity project datasets are public (or protected via server token only)
+* ✅ Studio only deployed to `/studio`, gated if needed
+* ✅ Image domains whitelisted in `next.config.js`
+* ✅ Preview routes secured with token
+* ✅ Sanity schema matches adapter expectations
+
+---
+
+## 9. Resources
+
+* [https://www.sanity.io/docs](https://www.sanity.io/docs)
+* [https://github.com/sanity-io/next-sanity](https://github.com/sanity-io/next-sanity)
+* [https://www.sanity.io/plugins](https://www.sanity.io/plugins)
+* [https://groq.dev](https://groq.dev)
+* [https://portabletext.dev](https://portabletext.dev)
+* [https://www.youtube.com/watch?v=SplLQEaJUcU](https://www.youtube.com/watch?v=SplLQEaJUcU)
+
+---
