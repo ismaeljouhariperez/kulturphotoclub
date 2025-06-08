@@ -23,6 +23,10 @@ export interface Post {
   author: {
     name: string;
     slug: { current: string };
+    image?: {
+      asset: { _ref: string };
+    };
+    bio?: string;
   };
   mainImage: {
     asset: {
