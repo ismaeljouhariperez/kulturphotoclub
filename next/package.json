@@ -21,6 +21,10 @@
     "react-dom": "^19.0.0",
     "yet-another-react-lightbox": "^3.23.2"
   },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=9.0.0"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
